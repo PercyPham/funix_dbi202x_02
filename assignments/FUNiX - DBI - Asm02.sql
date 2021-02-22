@@ -50,7 +50,12 @@ VALUES ('sa', 'Super Admin', 'S/HE can do all the configurations'),
        ('admin', 'Admin', 'S/HE can manage all editors and all business aspects'),
        ('editor', 'Editor', 'S/HE can manage all writers and their articles'),
        ('writer', 'Writer', 'S/HE can manage all of his/her own articles'),
-       ('viewer', 'Viewer', 'S/HE can reads articles');
+       ('viewer', 'Viewer', 'S/HE can reads articles'),
+       ('viewer1', 'Viewer1', 'S/HE can reads articles'), -- duplicate
+       ('viewer2', 'Viewer2', 'S/HE can reads articles'), -- duplicate
+       ('viewer3', 'Viewer3', 'S/HE can reads articles'), -- duplicate
+       ('viewer4', 'Viewer4', 'S/HE can reads articles'), -- duplicate
+       ('viewer5', 'Viewer5', 'S/HE can reads articles'); -- duplicate
 GO
 
 -- 4. User table
@@ -118,15 +123,15 @@ GO
 CREATE TABLE articles
 (
     article_id   INT IDENTITY (1,1) PRIMARY KEY,
-    writer       INT                           NOT NULL,
+    writer       INT                              NOT NULL,
     editor       INT,
     title        NVARCHAR(200),
     brief        NVARCHAR(500),
     content      NVARCHAR(MAX),
-    is_published BIT      DEFAULT 0,
+    status       VARCHAR(10) DEFAULT 'draft',
     published_at DATETIME,
-    created_at   DATETIME DEFAULT GETUTCDATE() NOT NULL,
-    updated_at   DATETIME DEFAULT GETUTCDATE() NOT NULL,
+    created_at   DATETIME    DEFAULT GETUTCDATE() NOT NULL,
+    updated_at   DATETIME    DEFAULT GETUTCDATE() NOT NULL,
 
     CONSTRAINT FK_ARTICLE_WRITER FOREIGN KEY (writer) REFERENCES users (user_id),
     CONSTRAINT FK_ARTICLE_EDITOR FOREIGN KEY (editor) REFERENCES users (user_id)
@@ -167,12 +172,17 @@ GO
 
 -- Insert seed data to 'articles' table
 SET IDENTITY_INSERT articles ON;
-INSERT INTO articles(article_id, writer, editor, title, is_published, published_at)
-VALUES (1, 5, NULL, 'article 1', 0, NULL),
-       (2, 6, NULL, 'article 2', 0, NULL),
-       (3, 7, 3, 'article 3', 0, DATEFROMPARTS(2021, 9, 1)),
-       (4, 5, 4, 'article 4', 1, DATEFROMPARTS(2021, 8, 1)),
-       (5, 6, 3, 'article 5', 1, DATEFROMPARTS(2021, 6, 1));
+INSERT INTO articles(article_id, writer, editor, title, status, published_at)
+VALUES (1, 5, NULL, 'article 1', 'draft', NULL),
+       (2, 6, NULL, 'article 2', 'draft', NULL),
+       (3, 7, 3, 'article 3', 'draft', DATEFROMPARTS(2021, 9, 1)),
+       (4, 5, 4, 'article 4', 'published', DATEFROMPARTS(2021, 8, 1)),
+       (5, 6, 3, 'article 5', 'published', DATEFROMPARTS(2021, 6, 1)),
+       (6, 5, 3, 'article 6', 'pending', DATEFROMPARTS(2021, 6, 1)),
+       (7, 7, 4, 'article 7', 'pending', DATEFROMPARTS(2021, 6, 1)),
+       (8, 7, 4, 'article 8', 'denied', DATEFROMPARTS(2021, 6, 1)),
+       (9, 6, 4, 'article 9', 'published', DATEFROMPARTS(2021, 6, 1)),
+       (10, 5, 3, 'article 10', 'published', DATEFROMPARTS(2021, 6, 1));
 SET IDENTITY_INSERT articles OFF;
 GO
 
@@ -196,7 +206,7 @@ GO
 
 -- Create index to look for comments in one article in desc order
 CREATE NONCLUSTERED INDEX idx_CommentArticle
-    ON comments (article_id, created_at DESC)
+    ON comments (article_id, created_at DESC);
 GO
 
 -- Create trigger to update updated_at whenever record on 'comments' table is updated
@@ -297,7 +307,12 @@ VALUES (1, 'POV', 'Point Of View'),
        (2, 'World', 'World news'),
        (3, 'Business', 'Business news'),
        (4, 'Health', 'Health news'),
-       (5, 'Science', 'Science news');
+       (5, 'Science', 'Science news'),
+       (6, 'Education', 'Education news'),
+       (7, 'Travel', 'Travel news'),
+       (8, 'Digital', 'Digital news'),
+       (9, 'Comedy', 'Comedy news'),
+       (10, 'Entertainment', 'Entertainment news');
 SET IDENTITY_INSERT categories OFF;
 GO
 
@@ -315,7 +330,7 @@ GO
 
 -- Add index to category since it's useful when searching articles in one category
 CREATE NONCLUSTERED INDEX idx_CategoryArticle_Category
-    ON category_articles (cat_id)
+    ON category_articles (cat_id);
 GO
 
 -- Insert seed data
@@ -324,7 +339,12 @@ VALUES (2, 1),
        (2, 2),
        (3, 3),
        (3, 4),
-       (3, 5);
+       (3, 5),
+       (4, 6),
+       (4, 7),
+       (4, 8),
+       (5, 9),
+       (5, 10);
 GO
 
 -- Select statement
@@ -411,7 +431,7 @@ CREATE FUNCTION GetWriterPublishedArticleCountTable()
             (
                 SELECT writer, COUNT(*) AS published_article_count
                 FROM articles
-                WHERE is_published = 1
+                WHERE status = 'published'
                 GROUP BY writer
             );
 GO
