@@ -1,0 +1,16 @@
+DECLARE @minLength INT;
+DECLARE @maxLength INT;
+
+SELECT @minLength = MIN(LEN(CITY)) FROM STATION;
+SELECT @maxLength = MAX(LEN(CITY)) FROM STATION;
+                               
+SELECT TOP(1) CITY as Name, LEN(CITY) as Length
+INTO #temp
+FROM STATION
+WHERE LEN(CITY)=@minLength ORDER BY CITY ASC;
+
+INSERT INTO #temp SELECT TOP(1) CITY, LEN(CITY)
+FROM STATION WHERE LEN(CITY)=@maxLength
+ORDER BY CITY ASC;
+
+SELECT * FROM #temp;
