@@ -457,3 +457,18 @@ BEGIN TRAN
     EXEC @id = GetWriterwWithMostPublishedArticles
     PRINT @id
 ROLLBACK TRAN
+
+--- Tạo 1 procedure
+
+CREATE PROCEDURE removeAllComments AS
+BEGIN
+    TRUNCATE TABLE comments;
+END;
+GO
+
+--- Test removeAllComments procedure
+BEGIN TRAN
+    SELECT * FROM comments;
+    EXEC removeAllComments
+    SELECT * FROM comments;
+ROLLBACK TRAN
